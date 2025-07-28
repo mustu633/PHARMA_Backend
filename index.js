@@ -1,7 +1,8 @@
+// index.js
 import express from "express";
-import { dbConnection } from "./db/mongo.js";
 import cors from "cors";
 import dotenv from "dotenv";
+import { dbConnection } from "./db/mongo.js";
 
 import productRouter from "./routes/productRoute.js";
 import saleRouter from "./routes/saleRoute.js";
@@ -10,34 +11,40 @@ import supplierRouter from "./routes/supplierRoute.js";
 import purchaseRouter from "./routes/purchaseRoute.js";
 import alertRouter from "./routes/alertRoute.js";
 
+// Load environment variables
 dotenv.config({ path: "./config/.env" });
+
+// Connect to MongoDB
 dbConnection();
 
 const app = express();
 
 // ✅ CORS Configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL, // Must match frontend
+  origin: process.env.FRONTEND_URL, // e.g., https://pharma-frontend.vercel.app
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-app.use(express.json());
-app.use(cors(corsOptions));
+// ✅ Handle preflight (OPTIONS) requests first
 app.options("*", cors(corsOptions));
 
-// app.use(express.json());
+// ✅ Apply CORS to all routes
+app.use(cors(corsOptions));
 
-// ✅ Debug Route to verify backend is up
+// ✅ Parse incoming JSON requests
+app.use(express.json());
+
+// ✅ Debug Route to verify backend deployment
 app.get("/", (req, res) => {
   res.send("✅ Backend Deployed Successfully");
 });
 
-// ✅ Optional: CORS Debug Route
+// ✅ Optional: CORS Debugging Endpoint
 app.get("/cors-check", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-  return res.json({
+  res.json({
     success: true,
     origin: req.headers.origin,
     frontendAllowed: process.env.FRONTEND_URL,
@@ -52,7 +59,8 @@ app.use("/api/suppliers", supplierRouter);
 app.use("/api/purchases", purchaseRouter);
 app.use("/api/alert", alertRouter);
 
-const PORT = process.env.PORT || 5000;
+// ✅ Start server
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`✅ Server is Running on Port: ${PORT}`);
 });
