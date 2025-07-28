@@ -1,52 +1,64 @@
 import express from "express";
-import { dbConnection } from "./db/mongo.js";
-import cors from "cors";
-import dotenv from "dotenv";
+import Purchase from "../models/purchaseSchema.js";
+import Product from "../models/productSchema.js";
+import checkStockLevels from "../utils/stockAlert.js";
+import { protect } from "../middlewares/auth.js";
 
-import productRouter from "./routes/productRoute.js";
-import saleRouter from "./routes/saleRoute.js";
-import userRouter from "./routes/authRoutes.js";
-import supplierRouter from "./routes/supplierRoute.js";
-import purchaseRouter from "./routes/purchaseRoute.js";
-import alertRouter from "./routes/alertRoute.js";
+const purchaseRouter = express.Router();
 
-dotenv.config({ path: "./config/.env" });
-dbConnection();
+// Create a new purchase
+purchaseRouter.post("/", async (req, res) => {
+  try {
+    const { product, supplier } = req.body;
+    const quantity = Number(req.body.quantity); // Cast to number
+    const purchasePrice = Number(req.body.purchasePrice);
 
-const app = express();
+    // Update product quantity
+    const updatedProduct = await Product.findByIdAndUpdate(
+      product,
+      { $inc: { quantity } },
+      { new: true }
+    );
 
-// ✅ Configure CORS properly
-const corsOptions = {
-  origin: process.env.FRONTEND_URL, // ✅ Must match your frontend URL
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+    if (!updatedProduct) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // ⚠️ This is important for preflight!
+    const purchase = new Purchase({
+      product,
+      supplier,
+      quantity,
+      purchasePrice,
+    });
+    await purchase.save();
 
-app.use(express.json());
+    res.status(201).json({
+      success: true,
+      purchase,
 
-// ✅ Add debug route at the top
-app.get("/cors-check", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-  return res.json({
-    success: true,
-    origin: req.headers.origin,
-    frontendAllowed: process.env.FRONTEND_URL,
-  });
+      message: "Purchase Successfull",
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to create purchase" });
+  }
 });
 
-// 🚀 Routes
-app.use("/api/products", productRouter);
-app.use("/api/sales", saleRouter);
-app.use("/api/users", userRouter);
-app.use("/api/suppliers", supplierRouter);
-app.use("/api/purchases", purchaseRouter);
-app.use("/api/alert", alertRouter);
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server is Running on Port: ${PORT}`);
+// Get all purchases
+purchaseRouter.get("/", async (req, res) => {
+  try {
+    const purchases = await Purchase.find()
+      .populate("supplier")
+      .populate("product");
+    res.status(200).json({ success: true, purchases });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to retrieve purchases" });
+  }
 });
+
+export default purchaseRouter;
