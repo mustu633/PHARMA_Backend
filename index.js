@@ -15,20 +15,25 @@ dbConnection();
 
 const app = express();
 
-// ✅ Configure CORS properly
+// ✅ CORS Configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL, // ✅ Must match your frontend URL
+  origin: process.env.FRONTEND_URL, // Must match frontend
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // ⚠️ This is important for preflight!
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
-// ✅ Add debug route at the top
+// ✅ Debug Route to verify backend is up
+app.get("/", (req, res) => {
+  res.send("✅ Backend Deployed Successfully");
+});
+
+// ✅ Optional: CORS Debug Route
 app.get("/cors-check", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
   return res.json({
@@ -38,7 +43,7 @@ app.get("/cors-check", (req, res) => {
   });
 });
 
-// 🚀 Routes
+// ✅ App Routes
 app.use("/api/products", productRouter);
 app.use("/api/sales", saleRouter);
 app.use("/api/users", userRouter);
