@@ -2,6 +2,7 @@ import express from "express";
 import { dbConnection } from "./db/mongo.js";
 import cors from "cors";
 import dotenv from "dotenv";
+
 import productRouter from "./routes/productRoute.js";
 import saleRouter from "./routes/saleRoute.js";
 import userRouter from "./routes/authRoutes.js";
@@ -14,20 +15,20 @@ dbConnection();
 
 const app = express();
 
-// ✅ Correct CORS setup
+// ✅ Configure CORS properly
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: process.env.FRONTEND_URL, // ✅ Must match your frontend URL
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // handle preflight properly
+app.options("*", cors(corsOptions)); // ⚠️ This is important for preflight!
 
 app.use(express.json());
 
-// 🔧 Debug CORS route
+// ✅ Add debug route at the top
 app.get("/cors-check", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
   return res.json({
@@ -37,7 +38,7 @@ app.get("/cors-check", (req, res) => {
   });
 });
 
-// 🚀 ROUTES
+// 🚀 Routes
 app.use("/api/products", productRouter);
 app.use("/api/sales", saleRouter);
 app.use("/api/users", userRouter);
@@ -45,8 +46,7 @@ app.use("/api/suppliers", supplierRouter);
 app.use("/api/purchases", purchaseRouter);
 app.use("/api/alert", alertRouter);
 
-// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is Running on Port: ${PORT}`);
+  console.log(`✅ Server is Running on Port: ${PORT}`);
 });
