@@ -20,17 +20,16 @@ const app = express();
 //     credentials: true,
 //   })
 // );
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // allow all needed methods
-    allowedHeaders: ["Content-Type", "Authorization"],    // allow custom headers
-  })
-);
+const corsOptions = {
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// Handle OPTIONS requests globally
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // ← pass the same options here!
+
 
 app.use(express.json());
 
