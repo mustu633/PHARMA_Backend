@@ -14,12 +14,7 @@ dbConnection();
 
 const app = express();
 
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL,
-//     credentials: true,
-//   })
-// );
+// ✅ Correct CORS setup
 const corsOptions = {
   origin: process.env.FRONTEND_URL,
   credentials: true,
@@ -28,12 +23,21 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // ← pass the same options here!
-
+app.options("*", cors(corsOptions)); // handle preflight properly
 
 app.use(express.json());
 
-// ROUTES
+// 🔧 Debug CORS route
+app.get("/cors-check", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+  return res.json({
+    success: true,
+    origin: req.headers.origin,
+    frontendAllowed: process.env.FRONTEND_URL,
+  });
+});
+
+// 🚀 ROUTES
 app.use("/api/products", productRouter);
 app.use("/api/sales", saleRouter);
 app.use("/api/users", userRouter);
@@ -41,6 +45,7 @@ app.use("/api/suppliers", supplierRouter);
 app.use("/api/purchases", purchaseRouter);
 app.use("/api/alert", alertRouter);
 
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is Running on Port: ${PORT}`);
